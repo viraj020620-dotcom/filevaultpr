@@ -3,17 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>File Vault Pro</title>
+  <title>File Vault Pro Dashboard</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
       --bg: #090d16;
       --card-bg: rgba(22, 28, 45, 0.95);
       --border: rgba(255, 255, 255, 0.08);
+      --accent: #38bdf8;
       --accent-grad: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
       --gold-grad: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      --green-grad: linear-gradient(135deg, #10b981 0%, #059669 100%);
       --text: #f8fafc;
       --muted: #94a3b8;
+      --danger: #ef4444;
+      --success: #10b981;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -22,74 +26,80 @@
       color: var(--text);
       padding: 18px 14px 40px;
     }
-    .header { text-align: center; margin-bottom: 20px; }
+    .header { text-align: center; margin-bottom: 18px; }
     .header h1 {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 800;
       background: var(--accent-grad);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .header p { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 14px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    }
     .badge-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .badge {
       padding: 4px 10px;
       border-radius: 999px;
       font-size: 11px;
       font-weight: 700;
-      background: rgba(245, 158, 11, 0.2);
-      color: #f59e0b;
-      border: 1px solid #f59e0b;
       text-transform: uppercase;
     }
-    .feature-list { list-style: none; margin: 16px 0; }
+    .badge-admin { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+    .badge-locked { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .input-box {
+      width: 100%;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      margin: 8px 0 12px;
+      outline: none;
+    }
+    .input-box:focus { border-color: var(--accent); }
+    .feature-list { list-style: none; margin: 14px 0; }
     .feature-list li {
       display: flex;
       align-items: center;
       font-size: 13px;
       color: #e2e8f0;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
-    .feature-list li span { margin-right: 10px; font-size: 16px; }
+    .feature-list li span { margin-right: 8px; font-size: 15px; }
     .price-tag {
       background: rgba(56, 189, 248, 0.08);
-      border: 1px dashed #38bdf8;
+      border: 1px dashed var(--accent);
       border-radius: 12px;
       padding: 12px;
       text-align: center;
-      margin: 16px 0;
+      margin: 14px 0;
     }
     .price-tag b { font-size: 20px; color: #fff; }
     .btn {
       display: block;
       width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 14px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
       font-weight: 700;
       text-align: center;
       text-decoration: none;
       cursor: pointer;
       border: none;
+      margin-top: 8px;
     }
-    .btn-gold {
-      background: var(--gold-grad);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-    }
-    .btn-secondary {
-      background: rgba(255,255,255,0.06);
-      color: var(--muted);
-      margin-top: 10px;
-    }
+    .btn-primary { background: var(--accent-grad); color: #fff; }
+    .btn-green { background: var(--green-grad); color: #fff; }
+    .btn-gold { background: var(--gold-grad); color: #fff; }
+    .btn-secondary { background: rgba(255,255,255,0.06); color: var(--muted); }
   </style>
 </head>
 <body>
@@ -100,33 +110,11 @@
   </div>
 
   <div class="badge-bar">
-    <span class="badge">🔒 Access Locked</span>
+    <span id="roleBadge" class="badge">Loading...</span>
     <span id="userTag" style="font-size: 12px; color: var(--muted);"></span>
   </div>
 
-  <div class="card">
-    <h3 style="font-size: 16px; margin-bottom: 6px;">🚀 Web App Pro Privileges</h3>
-    <p style="font-size: 12px; color: var(--muted);">Unlock the visual cloud dashboard for your links.</p>
-
-    <ul class="feature-list">
-      <li><span>📊</span> <b>Live Analytics:</b> Real-time click and view tracking</li>
-      <li><span>🗑️</span> <b>1-Click Management:</b> Instant link deletion & controls</li>
-      <li><span>♾️</span> <b>Permanent Storage:</b> Direct oversight of active links</li>
-      <li><span>⚡</span> <b>Zero Queues:</b> Priority access through the Web App</li>
-    </ul>
-
-    <div class="price-tag">
-      <span style="font-size: 11px; color: var(--muted); text-transform: uppercase; display: block;">Lifetime Access</span>
-      <b>₹5 Only</b> <span style="font-size: 12px; color: var(--muted);">(or 2 Invites)</span>
-    </div>
-
-    <button onclick="requestAccess()" class="btn btn-gold">
-      💳 Pay ₹5 & Grant Access
-    </button>
-    <button onclick="closeApp()" class="btn btn-secondary">
-      Back to Bot Chat
-    </button>
-  </div>
+  <div id="dashboardContent"></div>
 
   <script>
     const tg = window.Telegram?.WebApp;
@@ -135,8 +123,96 @@
       tg.expand();
     }
 
-    const user = tg?.initDataUnsafe?.user || { id: 0, username: "Guest" };
-    document.getElementById("userTag").innerText = user.username ? `@${user.username}` : `ID: ${user.id || 'N/A'}`;
+    const ADMIN_ID = 5227795354;
+    const user = tg?.initDataUnsafe?.user || { id: ADMIN_ID, username: "MRINFERNAL" };
+    const isAdmin = (Number(user.id) === ADMIN_ID);
+
+    const roleBadge = document.getElementById("roleBadge");
+    const userTag = document.getElementById("userTag");
+    const container = document.getElementById("dashboardContent");
+
+    userTag.innerText = user.username ? `@${user.username}` : `ID: ${user.id}`;
+
+    if (isAdmin) {
+      roleBadge.innerText = "👑 Master Admin";
+      roleBadge.className = "badge badge-admin";
+
+      container.innerHTML = `
+        <div class="card">
+          <h3 style="font-size: 15px; margin-bottom: 4px; color: var(--accent);">👑 Admin Grant Panel</h3>
+          <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Grant instant permissions to any bot user.</p>
+          
+          <label style="font-size: 11px; color: var(--muted); text-transform: uppercase;">User Telegram ID</label>
+          <input type="number" id="targetUserId" class="input-box" placeholder="e.g. 123456789">
+
+          <button onclick="sendAdminAction('unlock_web')" class="btn btn-green">🔓 Grant Web App Access (₹5)</button>
+          <button onclick="sendAdminAction('grant_vip')" class="btn btn-gold">💎 Grant VIP 90 Days (₹100)</button>
+          <button onclick="sendAdminAction('grant_speed')" class="btn btn-primary">⚡ Grant Speed Pass 24h (₹2)</button>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 15px; margin-bottom: 4px; color: var(--accent);">♾️ Make Link Permanent</h3>
+          <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Lock link forever for ₹1 orders.</p>
+
+          <label style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Link ID</label>
+          <input type="text" id="targetLinkId" class="input-box" placeholder="e.g. ab12cd">
+
+          <button onclick="sendAdminAction('set_permanent')" class="btn btn-gold">♾️ Activate Permanent Link (₹1)</button>
+        </div>
+
+        <button onclick="closeApp()" class="btn btn-secondary">Close Dashboard</button>
+      `;
+    } else {
+      roleBadge.innerText = "🔒 Access Locked";
+      roleBadge.className = "badge badge-locked";
+
+      container.innerHTML = `
+        <div class="card">
+          <h3 style="font-size: 16px; margin-bottom: 6px;">🚀 Web App Pro Privileges</h3>
+          <p style="font-size: 12px; color: var(--muted);">Unlock the visual cloud dashboard for your links.</p>
+
+          <ul class="feature-list">
+            <li><span>📊</span> <b>Live Analytics:</b> Real-time click and view tracking</li>
+            <li><span>🗑️</span> <b>1-Click Management:</b> Instant link deletion & controls</li>
+            <li><span>♾️</span> <b>Permanent Storage:</b> Direct oversight of active links</li>
+            <li><span>⚡</span> <b>Zero Queues:</b> Priority access through the Web App</li>
+          </ul>
+
+          <div class="price-tag">
+            <span style="font-size: 11px; color: var(--muted); text-transform: uppercase; display: block;">Lifetime Access</span>
+            <b>₹5 Only</b> <span style="font-size: 12px; color: var(--muted);">(or 2 Invites)</span>
+          </div>
+
+          <button onclick="requestAccess()" class="btn btn-gold">💳 Pay ₹5 & Grant Access</button>
+          <button onclick="closeApp()" class="btn btn-secondary">Back to Bot Chat</button>
+        </div>
+      `;
+    }
+
+    function sendAdminAction(actionType) {
+      let targetId = document.getElementById("targetUserId") ? document.getElementById("targetUserId").value.trim() : "";
+      let linkId = document.getElementById("targetLinkId") ? document.getElementById("targetLinkId").value.trim() : "";
+
+      if ((actionType === 'unlock_web' || actionType === 'grant_vip' || actionType === 'grant_speed') && !targetId) {
+        alert("Please enter a valid User ID!");
+        return;
+      }
+      if (actionType === 'set_permanent' && !linkId) {
+        alert("Please enter a Link ID!");
+        return;
+      }
+
+      if (tg) {
+        tg.sendData(JSON.stringify({
+          action: actionType,
+          target_id: targetId,
+          link_id: linkId
+        }));
+        tg.close();
+      } else {
+        alert("Action triggered! (Open inside Telegram to execute command)");
+      }
+    }
 
     function requestAccess() {
       const uId = user.id || "Unknown";
@@ -145,7 +221,7 @@
         `Hey @MRINFERNAL,\n\nI want to buy Permanent Web App Access for ₹5!\n\n` +
         `👤 User: ${uName}\n` +
         `🆔 User ID: ${uId}\n\n` +
-        `Please share payment QR / UPI ID so I can pay and get activated via /unlockweb ${uId}`
+        `Please share UPI QR so I can pay.`
       );
       window.open(`https://t.me/MRINFERNAL?text=${paymentMsg}`, '_blank');
     }
