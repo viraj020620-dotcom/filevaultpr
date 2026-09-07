@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>File Vault Pro Dashboard</title>
+  <title>FileVault Pro Dashboard</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
@@ -17,16 +17,17 @@
       --text: #f8fafc;
       --muted: #94a3b8;
       --danger: #ef4444;
-      --success: #10b981;
+      --warning: #f59e0b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
-      padding: 18px 14px 40px;
+      padding: 16px;
+      padding-bottom: 70px;
     }
-    .header { text-align: center; margin-bottom: 18px; }
+    .header { text-align: center; margin-bottom: 16px; }
     .header h1 {
       font-size: 20px;
       font-weight: 800;
@@ -34,7 +35,7 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .header p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .header p { font-size: 12px; color: var(--muted); margin-top: 3px; }
     .badge-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .badge {
       padding: 4px 10px;
@@ -44,77 +45,74 @@
       text-transform: uppercase;
     }
     .badge-admin { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+    .badge-vip { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+    .badge-user { background: rgba(56, 189, 248, 0.2); color: var(--accent); border: 1px solid var(--accent); }
     .badge-locked { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
     }
     .input-box {
       width: 100%;
       background: rgba(0,0,0,0.35);
       border: 1px solid var(--border);
-      padding: 12px;
-      border-radius: 10px;
+      padding: 10px;
+      border-radius: 8px;
       color: #fff;
-      font-size: 13px;
-      margin: 8px 0 12px;
+      font-size: 12px;
+      margin: 6px 0 10px;
       outline: none;
     }
     .input-box:focus { border-color: var(--accent); }
-    .feature-list { list-style: none; margin: 14px 0; }
-    .feature-list li {
-      display: flex;
-      align-items: center;
-      font-size: 13px;
-      color: #e2e8f0;
-      margin-bottom: 8px;
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      font-size: 11px;
+      padding: 8px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 8px;
+      margin: 8px 0;
     }
-    .feature-list li span { margin-right: 8px; font-size: 15px; }
-    .price-tag {
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px dashed var(--accent);
-      border-radius: 12px;
-      padding: 12px;
-      text-align: center;
-      margin: 14px 0;
-    }
-    .price-tag b { font-size: 20px; color: #fff; }
+    .stat-item span { color: var(--muted); display: block; font-size: 9px; text-transform: uppercase; }
+    .stat-item b { font-size: 12px; color: #fff; word-break: break-all; }
     .btn {
       display: block;
       width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 13px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
       font-weight: 700;
       text-align: center;
       text-decoration: none;
       cursor: pointer;
       border: none;
-      margin-top: 8px;
+      margin-top: 6px;
     }
     .btn-primary { background: var(--accent-grad); color: #fff; }
-    .btn-green { background: var(--green-grad); color: #fff; }
     .btn-gold { background: var(--gold-grad); color: #fff; }
+    .btn-green { background: var(--green-grad); color: #fff; }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
     .btn-secondary { background: rgba(255,255,255,0.06); color: var(--muted); }
+    .search-box { margin-bottom: 12px; }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <h1>⚡ FILE VAULT DASHBOARD</h1>
-    <p>Official File Manager for @FILETOLINKSPRBOT</p>
+    <h1>⚡ FILEVAULT DASHBOARD</h1>
+    <p>Admin: @MRINFERNAL</p>
   </div>
 
   <div class="badge-bar">
     <span id="roleBadge" class="badge">Loading...</span>
-    <span id="userTag" style="font-size: 12px; color: var(--muted);"></span>
+    <span id="summaryCount" style="font-size: 12px; color: var(--muted);"></span>
   </div>
 
-  <div id="dashboardContent"></div>
+  <div id="mainContainer"></div>
 
   <script>
     const tg = window.Telegram?.WebApp;
@@ -127,60 +125,173 @@
     const user = tg?.initDataUnsafe?.user || { id: ADMIN_ID, username: "MRINFERNAL" };
     const isAdmin = (Number(user.id) === ADMIN_ID);
 
-    const roleBadge = document.getElementById("roleBadge");
-    const userTag = document.getElementById("userTag");
-    const container = document.getElementById("dashboardContent");
+    // Parse data passed in URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    let payload = { records: [], is_vip: false, webapp_unlocked: false };
+    try {
+      const raw = urlParams.get("data");
+      if (raw) payload = JSON.parse(decodeURIComponent(raw));
+    } catch(e) {
+      console.error(e);
+    }
 
-    userTag.innerText = user.username ? `@${user.username}` : `ID: ${user.id}`;
+    const isVip = payload.is_vip || isAdmin;
+    const isUnlocked = payload.webapp_unlocked || isVip || isAdmin;
+
+    const roleBadge = document.getElementById("roleBadge");
+    const container = document.getElementById("mainContainer");
+    const summaryCount = document.getElementById("summaryCount");
 
     if (isAdmin) {
       roleBadge.innerText = "👑 Master Admin";
       roleBadge.className = "badge badge-admin";
-
-      container.innerHTML = `
-        <div class="card">
-          <h3 style="font-size: 15px; margin-bottom: 4px; color: var(--accent);">👑 Admin Grant Panel</h3>
-          <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Grant instant permissions to any bot user.</p>
-          
-          <label style="font-size: 11px; color: var(--muted); text-transform: uppercase;">User Telegram ID</label>
-          <input type="number" id="targetUserId" class="input-box" placeholder="e.g. 123456789">
-
-          <button onclick="sendAdminAction('unlock_web')" class="btn btn-green">🔓 Grant Web App Access (₹5)</button>
-          <button onclick="sendAdminAction('grant_vip')" class="btn btn-gold">💎 Grant VIP 90 Days (₹100)</button>
-          <button onclick="sendAdminAction('grant_speed')" class="btn btn-primary">⚡ Grant Speed Pass 24h (₹2)</button>
-        </div>
-
-        <div class="card">
-          <h3 style="font-size: 15px; margin-bottom: 4px; color: var(--accent);">♾️ Make Link Permanent</h3>
-          <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Lock link forever for ₹1 orders.</p>
-
-          <label style="font-size: 11px; color: var(--muted); text-transform: uppercase;">Link ID</label>
-          <input type="text" id="targetLinkId" class="input-box" placeholder="e.g. ab12cd">
-
-          <button onclick="sendAdminAction('set_permanent')" class="btn btn-gold">♾️ Activate Permanent Link (₹1)</button>
-        </div>
-
-        <button onclick="closeApp()" class="btn btn-secondary">Close Dashboard</button>
-      `;
+      renderAdminView();
+    } else if (isUnlocked) {
+      roleBadge.innerText = isVip ? "⭐ VIP Member" : "Active User";
+      roleBadge.className = isVip ? "badge badge-vip" : "badge badge-user";
+      renderUserView();
     } else {
-      roleBadge.innerText = "🔒 Access Locked";
+      roleBadge.innerText = "🔒 Locked";
       roleBadge.className = "badge badge-locked";
+      renderLockedView();
+    }
 
+    // 1. ADMIN DASHBOARD
+    function renderAdminView() {
+      let records = payload.records || [];
+      summaryCount.innerText = `Total Links: ${records.length}`;
+
+      let adminHtml = `
+        <div class="card">
+          <h3 style="font-size: 14px; margin-bottom: 4px; color: var(--accent);">👑 Quick User Grant Panel</h3>
+          <input type="number" id="targetUserId" class="input-box" placeholder="Target Telegram User ID">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+            <button onclick="sendAction('unlock_web')" class="btn btn-green">🔓 Unlock Web (₹5)</button>
+            <button onclick="sendAction('grant_vip')" class="btn btn-gold">💎 Grant VIP (₹100)</button>
+          </div>
+        </div>
+
+        <div class="search-box">
+          <input type="text" id="adminSearch" class="input-box" placeholder="🔍 Search Link ID, Owner, Title, or Password..." oninput="filterAdminLinks()">
+        </div>
+
+        <div id="linksList"></div>
+      `;
+      container.innerHTML = adminHtml;
+      renderAdminCards(records);
+    }
+
+    function renderAdminCards(list) {
+      const listDiv = document.getElementById("linksList");
+      if (!listDiv) return;
+
+      if (list.length === 0) {
+        listDiv.innerHTML = `<div class="card" style="text-align:center; color:var(--muted); font-size:12px;">No uploaded file links in database.</div>`;
+        return;
+      }
+
+      listDiv.innerHTML = list.map(item => `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <b style="font-size:13px;">📦 ${escapeHtml(item.nickname || 'Untitled')}</b>
+              <div style="font-size:10px; color:var(--muted);">ID: <code>${item.id}</code></div>
+            </div>
+            <span class="badge ${item.is_permanent ? 'badge-vip' : 'badge-user'}">${item.is_permanent ? 'PERMANENT' : 'EXPIRING'}</span>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-item"><span>Owner ID / User</span><b>${item.owner_id} (${escapeHtml(item.owner_username)})</b></div>
+            <div class="stat-item"><span>Plain Password</span><b>${item.password ? '🔑 ' + escapeHtml(item.password) : '🔓 None'}</b></div>
+            <div class="stat-item"><span>Total Views</span><b>👁️ ${item.views || 0}</b></div>
+            <div class="stat-item"><span>Files Count</span><b>📁 ${item.file_count || 1} file(s)</b></div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px; margin-top:6px;">
+            <a href="https://t.me/FILETOLINKSPRBOT?start=${item.id}" class="btn btn-primary" target="_blank">🔗 Open</a>
+            <button onclick="makePermanent('${item.id}')" class="btn btn-gold">♾️ Lock</button>
+            <button onclick="deleteLink('${item.id}')" class="btn btn-danger">🗑️ Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterAdminLinks() {
+      let q = document.getElementById("adminSearch").value.toLowerCase();
+      let records = payload.records || [];
+      let filtered = records.filter(r => 
+        (r.id && r.id.toLowerCase().includes(q)) ||
+        (r.nickname && r.nickname.toLowerCase().includes(q)) ||
+        (r.owner_username && r.owner_username.toLowerCase().includes(q)) ||
+        (String(r.owner_id).includes(q)) ||
+        (r.password && r.password.toLowerCase().includes(q))
+      );
+      renderAdminCards(filtered);
+    }
+
+    // 2. NORMAL USER VIEW (OWN FILES ONLY)
+    function renderUserView() {
+      let myRecords = (payload.records || []).filter(r => String(r.owner_id) === String(user.id));
+      summaryCount.innerText = `My Uploads: ${myRecords.length}`;
+
+      if (myRecords.length === 0) {
+        container.innerHTML = `
+          <div class="card" style="text-align:center; padding: 20px;">
+            <p style="font-size:13px; color:var(--muted);">You haven't generated any active links yet.</p>
+            <p style="font-size:12px; color:var(--accent); margin-top:6px;">Send files in the bot chat to create a link!</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = myRecords.map(item => `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between;">
+            <b style="font-size:13px;">📦 ${escapeHtml(item.nickname || 'Untitled')}</b>
+            <span class="badge ${item.is_permanent ? 'badge-vip' : 'badge-user'}">${item.is_permanent ? 'Permanent' : 'Expiring'}</span>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-item"><span>Current Password</span><b>${item.password ? '🔑 ' + escapeHtml(item.password) : '🔓 Public'}</b></div>
+            <div class="stat-item"><span>Total Views</span><b>👁️ ${item.views || 0}</b></div>
+            <div class="stat-item"><span>Expiry</span><b>⏳ ${item.expires_in || 'Never'}</b></div>
+            <div class="stat-item"><span>Files</span><b>📁 ${item.file_count || 1} file(s)</b></div>
+          </div>
+
+          <!-- Edit Metadata Box -->
+          <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; margin-top:6px;">
+            <div style="display:flex; gap:4px;">
+              <input type="text" id="nick_${item.id}" class="input-box" style="margin:0;" placeholder="New Title" value="${escapeHtml(item.nickname || '')}">
+              <input type="text" id="pass_${item.id}" class="input-box" style="margin:0;" placeholder="New Password" value="${escapeHtml(item.password || '')}">
+            </div>
+            <button onclick="updateMetadata('${item.id}')" class="btn btn-primary" style="margin-top:6px;">💾 Save Details</button>
+          </div>
+
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <a href="https://t.me/FILETOLINKSPRBOT?start=${item.id}" class="btn btn-secondary" target="_blank">🔗 Test Link</a>
+            <button onclick="deleteLink('${item.id}')" class="btn btn-danger">🗑️ Delete Link</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 3. LOCKED PROMO VIEW
+    function renderLockedView() {
       container.innerHTML = `
         <div class="card">
           <h3 style="font-size: 16px; margin-bottom: 6px;">🚀 Web App Pro Privileges</h3>
           <p style="font-size: 12px; color: var(--muted);">Unlock the visual cloud dashboard for your links.</p>
 
-          <ul class="feature-list">
-            <li><span>📊</span> <b>Live Analytics:</b> Real-time click and view tracking</li>
-            <li><span>🗑️</span> <b>1-Click Management:</b> Instant link deletion & controls</li>
-            <li><span>♾️</span> <b>Permanent Storage:</b> Direct oversight of active links</li>
-            <li><span>⚡</span> <b>Zero Queues:</b> Priority access through the Web App</li>
+          <ul style="list-style:none; margin:14px 0; font-size:12px;">
+            <li style="margin-bottom:6px;">📊 <b>Live Analytics:</b> Real-time click & view stats</li>
+            <li style="margin-bottom:6px;">🔑 <b>Password Controls:</b> Change passwords on the fly</li>
+            <li style="margin-bottom:6px;">🗑️ <b>1-Click Management:</b> Instant bundle deletion</li>
+            <li style="margin-bottom:6px;">⚡ <b>Priority Queue:</b> Instant upload speeds</li>
           </ul>
 
-          <div class="price-tag">
-            <span style="font-size: 11px; color: var(--muted); text-transform: uppercase; display: block;">Lifetime Access</span>
-            <b>₹5 Only</b> <span style="font-size: 12px; color: var(--muted);">(or 2 Invites)</span>
+          <div style="background:rgba(56,189,248,0.08); border:1px dashed var(--accent); border-radius:10px; padding:10px; text-align:center; margin:10px 0;">
+            <span style="font-size:10px; color:var(--muted); text-transform:uppercase;">Lifetime Access</span>
+            <div style="font-size:18px; font-weight:bold;">₹5 Only</div>
           </div>
 
           <button onclick="requestAccess()" class="btn btn-gold">💳 Pay ₹5 & Grant Access</button>
@@ -189,46 +300,47 @@
       `;
     }
 
-    function sendAdminAction(actionType) {
-      let targetId = document.getElementById("targetUserId") ? document.getElementById("targetUserId").value.trim() : "";
-      let linkId = document.getElementById("targetLinkId") ? document.getElementById("targetLinkId").value.trim() : "";
+    // Action handlers
+    function sendAction(type) {
+      let targetId = document.getElementById("targetUserId").value.trim();
+      if (!targetId) return alert("Enter User ID!");
+      tg?.sendData(JSON.stringify({ action: type, target_id: targetId }));
+      tg?.close();
+    }
 
-      if ((actionType === 'unlock_web' || actionType === 'grant_vip' || actionType === 'grant_speed') && !targetId) {
-        alert("Please enter a valid User ID!");
-        return;
-      }
-      if (actionType === 'set_permanent' && !linkId) {
-        alert("Please enter a Link ID!");
-        return;
-      }
+    function updateMetadata(id) {
+      let nick = document.getElementById(`nick_${id}`).value.trim();
+      let pass = document.getElementById(`pass_${id}`).value.trim();
+      tg?.sendData(JSON.stringify({ action: "update_link", link_id: id, nickname: nick, password: pass }));
+      tg?.close();
+    }
 
-      if (tg) {
-        tg.sendData(JSON.stringify({
-          action: actionType,
-          target_id: targetId,
-          link_id: linkId
-        }));
-        tg.close();
-      } else {
-        alert("Action triggered! (Open inside Telegram to execute command)");
+    function makePermanent(id) {
+      tg?.sendData(JSON.stringify({ action: "set_permanent", link_id: id }));
+      tg?.close();
+    }
+
+    function deleteLink(id) {
+      if (confirm(`Delete file link ${id}?`)) {
+        tg?.sendData(JSON.stringify({ action: "delete_link", link_id: id }));
+        tg?.close();
       }
     }
 
     function requestAccess() {
       const uId = user.id || "Unknown";
       const uName = user.username ? `@${user.username}` : "No Username";
-      const paymentMsg = encodeURIComponent(
-        `Hey @MRINFERNAL,\n\nI want to buy Permanent Web App Access for ₹5!\n\n` +
-        `👤 User: ${uName}\n` +
-        `🆔 User ID: ${uId}\n\n` +
-        `Please share UPI QR so I can pay.`
-      );
-      window.open(`https://t.me/MRINFERNAL?text=${paymentMsg}`, '_blank');
+      const msg = encodeURIComponent(`Hey @MRINFERNAL,\nI want to buy Permanent Web App Access for ₹5!\n👤 User: ${uName}\n🆔 ID: ${uId}`);
+      window.open(`https://t.me/MRINFERNAL?text=${msg}`, '_blank');
     }
 
     function closeApp() {
       if (tg) tg.close();
       else window.close();
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
   </script>
 </body>
