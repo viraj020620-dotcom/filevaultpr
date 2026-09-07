@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Vault Pro</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 28, 45, 0.95);
+      --border: rgba(255, 255, 255, 0.08);
+      --accent-grad: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+      --gold-grad: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 18px 14px 40px;
+    }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      background: var(--accent-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .badge-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid #f59e0b;
+      text-transform: uppercase;
+    }
+    .feature-list { list-style: none; margin: 16px 0; }
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      color: #e2e8f0;
+      margin-bottom: 10px;
+    }
+    .feature-list li span { margin-right: 10px; font-size: 16px; }
+    .price-tag {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px dashed #38bdf8;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      margin: 16px 0;
+    }
+    .price-tag b { font-size: 20px; color: #fff; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-gold {
+      background: var(--gold-grad);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>⚡ FILE VAULT DASHBOARD</h1>
+    <p>Official File Manager for @FILETOLINKSPRBOT</p>
+  </div>
+
+  <div class="badge-bar">
+    <span class="badge">🔒 Access Locked</span>
+    <span id="userTag" style="font-size: 12px; color: var(--muted);"></span>
+  </div>
+
+  <div class="card">
+    <h3 style="font-size: 16px; margin-bottom: 6px;">🚀 Web App Pro Privileges</h3>
+    <p style="font-size: 12px; color: var(--muted);">Unlock the visual cloud dashboard for your links.</p>
+
+    <ul class="feature-list">
+      <li><span>📊</span> <b>Live Analytics:</b> Real-time click and view tracking</li>
+      <li><span>🗑️</span> <b>1-Click Management:</b> Instant link deletion & controls</li>
+      <li><span>♾️</span> <b>Permanent Storage:</b> Direct oversight of active links</li>
+      <li><span>⚡</span> <b>Zero Queues:</b> Priority access through the Web App</li>
+    </ul>
+
+    <div class="price-tag">
+      <span style="font-size: 11px; color: var(--muted); text-transform: uppercase; display: block;">Lifetime Access</span>
+      <b>₹5 Only</b> <span style="font-size: 12px; color: var(--muted);">(or 2 Invites)</span>
+    </div>
+
+    <button onclick="requestAccess()" class="btn btn-gold">
+      💳 Pay ₹5 & Grant Access
+    </button>
+    <button onclick="closeApp()" class="btn btn-secondary">
+      Back to Bot Chat
+    </button>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    const user = tg?.initDataUnsafe?.user || { id: 0, username: "Guest" };
+    document.getElementById("userTag").innerText = user.username ? `@${user.username}` : `ID: ${user.id || 'N/A'}`;
+
+    function requestAccess() {
+      const uId = user.id || "Unknown";
+      const uName = user.username ? `@${user.username}` : "No Username";
+      const paymentMsg = encodeURIComponent(
+        `Hey @MRINFERNAL,\n\nI want to buy Permanent Web App Access for ₹5!\n\n` +
+        `👤 User: ${uName}\n` +
+        `🆔 User ID: ${uId}\n\n` +
+        `Please share payment QR / UPI ID so I can pay and get activated via /unlockweb ${uId}`
+      );
+      window.open(`https://t.me/MRINFERNAL?text=${paymentMsg}`, '_blank');
+    }
+
+    function closeApp() {
+      if (tg) tg.close();
+      else window.close();
+    }
+  </script>
+</body>
+</html>
