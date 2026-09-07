@@ -25,7 +25,7 @@
       background: var(--bg);
       color: var(--text);
       padding: 16px;
-      padding-bottom: 70px;
+      padding-bottom: 60px;
     }
     .header { text-align: center; margin-bottom: 16px; }
     .header h1 {
@@ -45,7 +45,6 @@
       text-transform: uppercase;
     }
     .badge-admin { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
-    .badge-vip { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
     .badge-user { background: rgba(56, 189, 248, 0.2); color: var(--accent); border: 1px solid var(--accent); }
     .badge-locked { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
     .card {
@@ -97,7 +96,6 @@
     .btn-green { background: var(--green-grad); color: #fff; }
     .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
     .btn-secondary { background: rgba(255,255,255,0.06); color: var(--muted); }
-    .search-box { margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -125,19 +123,6 @@
     const user = tg?.initDataUnsafe?.user || { id: ADMIN_ID, username: "MRINFERNAL" };
     const isAdmin = (Number(user.id) === ADMIN_ID);
 
-    // Parse data passed in URL if present
-    const urlParams = new URLSearchParams(window.location.search);
-    let payload = { records: [], is_vip: false, webapp_unlocked: false };
-    try {
-      const raw = urlParams.get("data");
-      if (raw) payload = JSON.parse(decodeURIComponent(raw));
-    } catch(e) {
-      console.error(e);
-    }
-
-    const isVip = payload.is_vip || isAdmin;
-    const isUnlocked = payload.webapp_unlocked || isVip || isAdmin;
-
     const roleBadge = document.getElementById("roleBadge");
     const container = document.getElementById("mainContainer");
     const summaryCount = document.getElementById("summaryCount");
@@ -145,23 +130,9 @@
     if (isAdmin) {
       roleBadge.innerText = "👑 Master Admin";
       roleBadge.className = "badge badge-admin";
-      renderAdminView();
-    } else if (isUnlocked) {
-      roleBadge.innerText = isVip ? "⭐ VIP Member" : "Active User";
-      roleBadge.className = isVip ? "badge badge-vip" : "badge badge-user";
-      renderUserView();
-    } else {
-      roleBadge.innerText = "🔒 Locked";
-      roleBadge.className = "badge badge-locked";
-      renderLockedView();
-    }
+      summaryCount.innerText = "Full Database Mode";
 
-    // 1. ADMIN DASHBOARD
-    function renderAdminView() {
-      let records = payload.records || [];
-      summaryCount.innerText = `Total Links: ${records.length}`;
-
-      let adminHtml = `
+      container.innerHTML = `
         <div class="card">
           <h3 style="font-size: 14px; margin-bottom: 4px; color: var(--accent);">👑 Quick User Grant Panel</h3>
           <input type="number" id="targetUserId" class="input-box" placeholder="Target Telegram User ID">
@@ -171,122 +142,38 @@
           </div>
         </div>
 
-        <div class="search-box">
-          <input type="text" id="adminSearch" class="input-box" placeholder="🔍 Search Link ID, Owner, Title, or Password..." oninput="filterAdminLinks()">
+        <div class="card">
+          <h3 style="font-size: 14px; margin-bottom: 4px; color: var(--accent);">🔍 Global Link Lookup</h3>
+          <p style="font-size: 11px; color: var(--muted); margin-bottom: 6px;">Manage user links, change passwords, and moderate TOS.</p>
+          <input type="text" id="targetLinkId" class="input-box" placeholder="Enter Link ID (e.g. ab12cd)">
+          
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+            <button onclick="sendAction('set_permanent')" class="btn btn-gold">♾️ Make Permanent</button>
+            <button onclick="sendAction('delete_link')" class="btn btn-danger">🗑️ Delete Link</button>
+          </div>
         </div>
 
-        <div id="linksList"></div>
+        <div class="card" style="text-align: center;">
+          <p style="font-size: 12px; color: var(--muted);">View your full uploaded files directory anytime inside the bot:</p>
+          <a href="https://t.me/FILETOLINKSPRBOT" class="btn btn-primary">📱 Open /myfiles in Bot</a>
+        </div>
+
+        <button onclick="closeApp()" class="btn btn-secondary">Close Dashboard</button>
       `;
-      container.innerHTML = adminHtml;
-      renderAdminCards(records);
-    }
+    } else {
+      roleBadge.innerText = "🔒 Access Locked";
+      roleBadge.className = "badge badge-locked";
 
-    function renderAdminCards(list) {
-      const listDiv = document.getElementById("linksList");
-      if (!listDiv) return;
-
-      if (list.length === 0) {
-        listDiv.innerHTML = `<div class="card" style="text-align:center; color:var(--muted); font-size:12px;">No uploaded file links in database.</div>`;
-        return;
-      }
-
-      listDiv.innerHTML = list.map(item => `
-        <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
-              <b style="font-size:13px;">📦 ${escapeHtml(item.nickname || 'Untitled')}</b>
-              <div style="font-size:10px; color:var(--muted);">ID: <code>${item.id}</code></div>
-            </div>
-            <span class="badge ${item.is_permanent ? 'badge-vip' : 'badge-user'}">${item.is_permanent ? 'PERMANENT' : 'EXPIRING'}</span>
-          </div>
-
-          <div class="stats-row">
-            <div class="stat-item"><span>Owner ID / User</span><b>${item.owner_id} (${escapeHtml(item.owner_username)})</b></div>
-            <div class="stat-item"><span>Plain Password</span><b>${item.password ? '🔑 ' + escapeHtml(item.password) : '🔓 None'}</b></div>
-            <div class="stat-item"><span>Total Views</span><b>👁️ ${item.views || 0}</b></div>
-            <div class="stat-item"><span>Files Count</span><b>📁 ${item.file_count || 1} file(s)</b></div>
-          </div>
-
-          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px; margin-top:6px;">
-            <a href="https://t.me/FILETOLINKSPRBOT?start=${item.id}" class="btn btn-primary" target="_blank">🔗 Open</a>
-            <button onclick="makePermanent('${item.id}')" class="btn btn-gold">♾️ Lock</button>
-            <button onclick="deleteLink('${item.id}')" class="btn btn-danger">🗑️ Delete</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function filterAdminLinks() {
-      let q = document.getElementById("adminSearch").value.toLowerCase();
-      let records = payload.records || [];
-      let filtered = records.filter(r => 
-        (r.id && r.id.toLowerCase().includes(q)) ||
-        (r.nickname && r.nickname.toLowerCase().includes(q)) ||
-        (r.owner_username && r.owner_username.toLowerCase().includes(q)) ||
-        (String(r.owner_id).includes(q)) ||
-        (r.password && r.password.toLowerCase().includes(q))
-      );
-      renderAdminCards(filtered);
-    }
-
-    // 2. NORMAL USER VIEW (OWN FILES ONLY)
-    function renderUserView() {
-      let myRecords = (payload.records || []).filter(r => String(r.owner_id) === String(user.id));
-      summaryCount.innerText = `My Uploads: ${myRecords.length}`;
-
-      if (myRecords.length === 0) {
-        container.innerHTML = `
-          <div class="card" style="text-align:center; padding: 20px;">
-            <p style="font-size:13px; color:var(--muted);">You haven't generated any active links yet.</p>
-            <p style="font-size:12px; color:var(--accent); margin-top:6px;">Send files in the bot chat to create a link!</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = myRecords.map(item => `
-        <div class="card">
-          <div style="display:flex; justify-content:space-between;">
-            <b style="font-size:13px;">📦 ${escapeHtml(item.nickname || 'Untitled')}</b>
-            <span class="badge ${item.is_permanent ? 'badge-vip' : 'badge-user'}">${item.is_permanent ? 'Permanent' : 'Expiring'}</span>
-          </div>
-
-          <div class="stats-row">
-            <div class="stat-item"><span>Current Password</span><b>${item.password ? '🔑 ' + escapeHtml(item.password) : '🔓 Public'}</b></div>
-            <div class="stat-item"><span>Total Views</span><b>👁️ ${item.views || 0}</b></div>
-            <div class="stat-item"><span>Expiry</span><b>⏳ ${item.expires_in || 'Never'}</b></div>
-            <div class="stat-item"><span>Files</span><b>📁 ${item.file_count || 1} file(s)</b></div>
-          </div>
-
-          <!-- Edit Metadata Box -->
-          <div style="background:rgba(0,0,0,0.2); padding:8px; border-radius:8px; margin-top:6px;">
-            <div style="display:flex; gap:4px;">
-              <input type="text" id="nick_${item.id}" class="input-box" style="margin:0;" placeholder="New Title" value="${escapeHtml(item.nickname || '')}">
-              <input type="text" id="pass_${item.id}" class="input-box" style="margin:0;" placeholder="New Password" value="${escapeHtml(item.password || '')}">
-            </div>
-            <button onclick="updateMetadata('${item.id}')" class="btn btn-primary" style="margin-top:6px;">💾 Save Details</button>
-          </div>
-
-          <div style="display:flex; gap:6px; margin-top:6px;">
-            <a href="https://t.me/FILETOLINKSPRBOT?start=${item.id}" class="btn btn-secondary" target="_blank">🔗 Test Link</a>
-            <button onclick="deleteLink('${item.id}')" class="btn btn-danger">🗑️ Delete Link</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // 3. LOCKED PROMO VIEW
-    function renderLockedView() {
       container.innerHTML = `
         <div class="card">
           <h3 style="font-size: 16px; margin-bottom: 6px;">🚀 Web App Pro Privileges</h3>
-          <p style="font-size: 12px; color: var(--muted);">Unlock the visual cloud dashboard for your links.</p>
+          <p style="font-size: 12px; color: var(--muted);">Unlock your personal cloud manager.</p>
 
           <ul style="list-style:none; margin:14px 0; font-size:12px;">
-            <li style="margin-bottom:6px;">📊 <b>Live Analytics:</b> Real-time click & view stats</li>
-            <li style="margin-bottom:6px;">🔑 <b>Password Controls:</b> Change passwords on the fly</li>
-            <li style="margin-bottom:6px;">🗑️ <b>1-Click Management:</b> Instant bundle deletion</li>
-            <li style="margin-bottom:6px;">⚡ <b>Priority Queue:</b> Instant upload speeds</li>
+            <li style="margin-bottom:6px;">📊 <b>Live View Counts:</b> Real-time visitor tracking</li>
+            <li style="margin-bottom:6px;">🔑 <b>Password Changing:</b> Change security on live links</li>
+            <li style="margin-bottom:6px;">🗑️ <b>1-Click Deletion:</b> Instantly delete files</li>
+            <li style="margin-bottom:6px;">⚡ <b>Zero Waiting:</b> Priority link generator</li>
           </ul>
 
           <div style="background:rgba(56,189,248,0.08); border:1px dashed var(--accent); border-radius:10px; padding:10px; text-align:center; margin:10px 0;">
@@ -300,30 +187,26 @@
       `;
     }
 
-    // Action handlers
-    function sendAction(type) {
-      let targetId = document.getElementById("targetUserId").value.trim();
-      if (!targetId) return alert("Enter User ID!");
-      tg?.sendData(JSON.stringify({ action: type, target_id: targetId }));
-      tg?.close();
-    }
+    function sendAction(actionType) {
+      let targetId = document.getElementById("targetUserId") ? document.getElementById("targetUserId").value.trim() : "";
+      let linkId = document.getElementById("targetLinkId") ? document.getElementById("targetLinkId").value.trim() : "";
 
-    function updateMetadata(id) {
-      let nick = document.getElementById(`nick_${id}`).value.trim();
-      let pass = document.getElementById(`pass_${id}`).value.trim();
-      tg?.sendData(JSON.stringify({ action: "update_link", link_id: id, nickname: nick, password: pass }));
-      tg?.close();
-    }
+      if ((actionType === 'unlock_web' || actionType === 'grant_vip') && !targetId) {
+        alert("Please enter a valid User ID!");
+        return;
+      }
+      if ((actionType === 'set_permanent' || actionType === 'delete_link') && !linkId) {
+        alert("Please enter a Link ID!");
+        return;
+      }
 
-    function makePermanent(id) {
-      tg?.sendData(JSON.stringify({ action: "set_permanent", link_id: id }));
-      tg?.close();
-    }
-
-    function deleteLink(id) {
-      if (confirm(`Delete file link ${id}?`)) {
-        tg?.sendData(JSON.stringify({ action: "delete_link", link_id: id }));
-        tg?.close();
+      if (tg) {
+        tg.sendData(JSON.stringify({
+          action: actionType,
+          target_id: targetId,
+          link_id: linkId
+        }));
+        tg.close();
       }
     }
 
@@ -337,10 +220,6 @@
     function closeApp() {
       if (tg) tg.close();
       else window.close();
-    }
-
-    function escapeHtml(str) {
-      return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
   </script>
 </body>
