@@ -138,7 +138,7 @@
     const summaryCount = document.getElementById("summaryCount");
     const container = document.getElementById("mainContainer");
 
-    // 1. ADMIN DASHBOARD
+    // 1. ADMIN DASHBOARD (GLOBAL MANAGEMENT & ALL USER FILES)
     if (uRole === "admin" || Number(tgUser.id) === ADMIN_ID) {
       roleBadge.innerText = "👑 Master Admin";
       roleBadge.className = "badge badge-admin";
@@ -163,7 +163,7 @@
       container.innerHTML = adminControls;
       renderAdminCards(items);
     } 
-    // 2. NORMAL USER DASHBOARD (100% FREE & UNLOCKED)
+    // 2. USER DASHBOARD (100% FREE & OPEN ACCESS TO PERSONAL FILES)
     else {
       roleBadge.innerText = uRole === "vip" ? "⭐ VIP Member" : "Free User";
       roleBadge.className = uRole === "vip" ? "badge badge-vip" : "badge badge-user";
